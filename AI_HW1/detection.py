@@ -28,13 +28,16 @@ def detect(dataPath, clf):
           regions[current_filename].append([int(string) for string in s])
     fig, ax = plt.subplots(1, len(regions))
     for index, (filename, regions) in enumerate(regions.items()):
-      image = cv2.imread(f"data/detect/{filename}", cv2.IMREAD_GRAYSCALE)
+      image = cv2.imread(f"data/detect/{filename}")
+      b, g, r = cv2.split(image)
+      image = cv2.merge([r, g, b])
+      gray_image = cv2.imread(f"data/detect/{filename}", cv2.IMREAD_GRAYSCALE)
       ax[index].axis('off')
       ax[index].set_title(filename)
-      ax[index].imshow(image, cmap='gray')
+      ax[index].imshow(image)
       for region in regions:
         x, y, w, h = region
-        crop_image = image[y:y+h, x:x+w]
+        crop_image = gray_image[y:y+h, x:x+w]
         # cv2.imshow("cropped", crop_image)
         # cv2.waitKey(0)
         crop_image = cv2.resize(crop_image, (19, 19), interpolation=cv2.INTER_CUBIC)
