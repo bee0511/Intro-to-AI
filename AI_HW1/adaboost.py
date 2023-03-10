@@ -148,7 +148,11 @@ class Adaboost:
             bestError: The error of the best classifer
         """
         # Begin your code (Part 2)
-        raise NotImplementedError("To be implemented")
+        #raise NotImplementedError("To be implemented")
+        Errors = np.sum(np.multiply(weights, np.abs(np.where(featureVals < 0, 1, 0) - labels)), 1)
+        bestError_index = np.argmin(Errors)
+        bestError = Errors[bestError_index]
+        bestClf = WeakClassifier(features[bestError_index])
         # End your code (Part 2)
         return bestClf, bestError
     
