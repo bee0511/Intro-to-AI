@@ -16,7 +16,7 @@ def loadImages(dataPath):
     dataset = []
     for flag, face_or_nonface in enumerate(["face", "non-face"]):
       for filename in os.listdir(f"{dataPath}/{face_or_nonface}"):
-        image = cv2.imread(f"{dataPath}/{face_or_nonface}/{filename}")
+        image = cv2.imread(f"{dataPath}/{face_or_nonface}/{filename}", -1)
         dataset.append((image, flag))
     
     # End your code (Part 1)
