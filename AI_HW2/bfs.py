@@ -6,8 +6,8 @@ edgeFile = 'edges.csv'
 def bfs(start, end):
     # Begin your code (Part 1)
     # raise NotImplementedError("To be implemented")
-    graph = {};
-    distances = {};
+    graph = {}
+    distances = {}
     with open(edgeFile, newline='') as csvfile:
         rows = csv.DictReader(csvfile)
         for row in rows:
@@ -26,7 +26,10 @@ def bfs(start, end):
     while queue:
         node = queue.pop(0)
         if node == end:
-            path = backtrace(parent, start, end)
+            path = [end]
+            while path[-1] != start:
+                path.append(parent[path[-1]])
+            path.reverse()
             for i in range(len(path) - 1):
                 distance += distances[(path[i], path[i + 1])]
                 # print(path[i], path[i+1], distances[(path[i], path[i + 1])], distance)
@@ -39,13 +42,6 @@ def bfs(start, end):
                 queue.append(adjacent)
                 parent[adjacent] = node
     # End your code (Part 1)
-
-def backtrace(parent, start, end):
-    path = [end]
-    while path[-1] != start:
-        path.append(parent[path[-1]])
-    path.reverse()
-    return path
 
 if __name__ == '__main__':
     
