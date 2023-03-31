@@ -61,13 +61,13 @@ def astar_time(start, end):
             if neighbor not in open_list and neighbor not in visited:
                 open_list.add(neighbor)
                 parents[neighbor] = current
-                g[neighbor] = g[current] + distances[(current, neighbor)]
+                g[neighbor] = g[current] + times[(current, neighbor)]
             # otherwise, check if it's quicker to first visit n, then m
             # and if it is, update parent data and g data
             # and if the node was in the closed_list, move it to open_list
             else:
-                if g[neighbor] > g[current] + distances[(current, neighbor)]:
-                    g[neighbor] = g[current] + distances[(current, neighbor)]
+                if g[neighbor] > g[current] + times[(current, neighbor)]:
+                    g[neighbor] = g[current] + times[(current, neighbor)]
                     parents[neighbor] = current
                     if neighbor in visited:
                         visited.remove(neighbor)
