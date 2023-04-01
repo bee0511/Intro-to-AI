@@ -61,7 +61,7 @@ def dfs(start, end):
     Returns:
         path: the path from start node to end node
         dist: the total distance on the path
-        num_visited: the number of nodes visited by bfs
+        num_visited: the number of nodes visited by dfs
     """
     graph, distances = readFile()
     stack = [start] # put the start node into stack
