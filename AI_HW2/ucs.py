@@ -48,29 +48,28 @@ def ucs(start, end):
         num_visited: the number of nodes visited by ucs
     """
     graph, distances = readFile()
-    visited = [start] # put the start node into visited
+    visited = set() # put the start node into visited
+    visited.add(start)
     queue = PriorityQueue()
     queue.put((0, [start])) # the first element is the distance of the path, the second element is the path
     while queue:
-        pair = queue.get() # get the path whose distance is the smallest in the priority queue
-        current_node = pair[1][-1] # get the last node from the path to be the current node
-        
+        total_weight, path = queue.get() # get the path whose distance is the smallest in the priority queue
+        current_node = path[-1] # get the last node from the path to be the current node
+        visited.add(current_node) # mark current node as visited
         if current_node == end: # if the current node is the end node
-            path = pair[1] # get the path from start node to end node
             distance = computeDistance(path, distances) # calculate the distance of the path
             return path, distance, len(visited)
         
         for neighbor in graph.get(current_node, []): # iterate each neighbor node of the current node
-            if neighbor not in visited: # if we haven't visited the neighbor node
-                new_path = list(pair[1])
+            if neighbor not in visited:
+                new_path = list(path)
                 new_path.append(neighbor) # put the neighbor node into the path
-                visited.append(neighbor) # put neighbor into visited
-                queue.put((pair[0] + distances[(current_node, neighbor)], new_path)) # update the total distance of the path
+                queue.put((total_weight + distances[(current_node, neighbor)], new_path)) # update the total distance of the path
     return None, 0, len(visited) # if we cannot find the route from start to end, return None.
 
 
 if __name__ == '__main__':
-    path, dist, num_visited = ucs(2270143902, 1079387396)
+    path, dist, num_visited = ucs( 1718165260,  8513026827)
     print(f'The number of path nodes: {len(path)}')
     print(f'Total distance of path: {dist}')
     print(f'The number of visited nodes: {num_visited}')
