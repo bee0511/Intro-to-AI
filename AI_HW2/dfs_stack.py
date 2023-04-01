@@ -69,13 +69,13 @@ def dfs(start, end):
     parent = {} # use dictionary to store the parent of a node
     while stack:
         current_node = stack.pop() # let the current node be the top node of the stack
+        visited.append(current_node) # put current node into visited
         if current_node == end: # if the current node is the end node
             path = rebuildPath(parent, start, end) # reconstruct the path 
             distance = computeDistance(path, distances) # calculate the distance of the path
             return path, distance, len(visited)
         for neighbor in graph.get(current_node, []): # iterate each neighbor node of the current node
             if neighbor not in visited: # if we haven't visited the neighbor node
-                visited.append(neighbor) # put neighbor into visited
                 stack.append(neighbor) # put neighbor into stack
                 parent[neighbor] = current_node # record the parent of the neighbor node
     return None, 0, len(visited) # if we cannot find the route from start to end, return None.
