@@ -52,21 +52,33 @@ def computeDistance(path, distances):
     return distance
 
 def dfs(start, end):
+    """Use stack to implement dfs
+
+    Args:
+        start (int): start node ID
+        end (int): end node ID
+
+    Returns:
+        path: the path from start node to end node
+        dist: the total distance on the path
+        num_visited: the number of nodes visited by bfs
+    """
     graph, distances = readFile()
-    visited = [start]
-    stack = [start]
-    parent = {}
+    stack = [start] # put the start node into stack
+    visited = [start] # put the start node into visited
+    parent = {} # use dictionary to store the parent of a node
     while stack:
-        current_node = stack.pop()
-        if current_node == end:
-            path = rebuildPath(parent, start, end)
-            distance = computeDistance(path, distances)
+        current_node = stack.pop() # let the current node be the top node of the stack
+        if current_node == end: # if the current node is the end node
+            path = rebuildPath(parent, start, end) # reconstruct the path 
+            distance = computeDistance(path, distances) # calculate the distance of the path
             return path, distance, len(visited)
-        for neighbor in graph.get(current_node, []):
-            if neighbor not in visited:
-                visited.append(neighbor)
-                stack.append(neighbor)
-                parent[neighbor] = current_node
+        for neighbor in graph.get(current_node, []): # iterate each neighbor node of the current node
+            if neighbor not in visited: # if we haven't visited the neighbor node
+                visited.append(neighbor) # put neighbor into visited
+                stack.append(neighbor) # put neighbor into stack
+                parent[neighbor] = current_node # record the parent of the neighbor node
+    return None, 0, len(visited) # if we cannot find the route from start to end, return None.
 
 
 if __name__ == '__main__':
