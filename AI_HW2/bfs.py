@@ -1,4 +1,5 @@
 import csv
+from collections import deque
 edgeFile = 'edges.csv'
 
 def readFile():
@@ -65,11 +66,11 @@ def bfs(start, end):
         num_visited: the number of nodes visited by bfs
     """
     graph, distances = readFile()
-    queue = [start] # put the start node into queue
+    queue = deque([start]) # put the start node into queue
     visited = [start] # put the start node into visited
     parent = {} # use dictionary to store the parent of a node
     while queue:
-        current_node = queue.pop(0) # let the current node be the first node of the queue
+        current_node = queue.popleft() # let the current node be the first node of the queue
         if current_node == end: # if the current node is the end node
             path = rebuildPath(parent, start, end) # reconstruct the path 
             distance = computeDistance(path, distances) # calculate the distance of the path

@@ -1,10 +1,13 @@
 import csv
 edgeFile = 'edges.csv'
 
+def readFile():
+    """ Read edges.csv, save the adjacency list of the graph, and save distances between two nodes.
 
-def dfs(start, end):
-    # Begin your code (Part 2)
-    # raise NotImplementedError("To be implemented")
+    Returns:
+        graph: a dictionary, where key is the node and value is a list of adjacent nodes.
+        distances: a dictionary, where key is a tuple with two adjacent nodes and value is the distance between them.
+    """
     graph = {}
     distances = {}  
     with open(edgeFile, newline='') as csvfile:
@@ -14,36 +17,56 @@ def dfs(start, end):
                 graph[int(row['start'])]=[]
             graph[int(row['start'])].append(int(row['end']))
             distances[(int(row['start']), int(row['end']))] = float(row['distance'])
+    return graph, distances
+
+def rebuildPath(parent, start, end):
+    """Rebuild the path from start node to end node with the saved parent relationship.
+
+    Args:
+        parent (dictionary): saves parents of the node
+        start (int): start node ID
+        end (int): end node ID
+
+    Returns:
+        path: a list with the start node to end node.
+    """
+    path = [end]
+    while path[-1] != start:
+        path.append(parent[path[-1]])
+    path.reverse()
+    return path
+
+def computeDistance(path, distances):
+    """Compute the total distance of the path.
+
+    Args:
+        path (list): saves the nodes on the path
+        distances (dictionary): save the distances between two nodes
+
+    Returns:
+        distance: int, the total distance along the path 
+    """
+    distance = 0
+    for i in range(len(path) - 1):
+        distance += distances[(path[i], path[i + 1])]
+    return distance
+
+def dfs(start, end):
+    graph, distances = readFile()
     visited = [start]
     stack = [start]
     parent = {}
-    distance = 0
     while stack:
-        node = stack[-1]
-        if node == end:
-            path = [end]
-            while path[-1] != start:
-                # print(path[-1])
-                # os.system("pause")
-                # print(parent[path[-1]])
-                path.append(parent[path[-1]])
-            path.reverse()
-            for i in range(len(path) - 1):
-                distance += distances[(path[i], path[i + 1])]
-                # print(path[i], path[i+1], distances[(path[i], path[i + 1])], distance)
+        current_node = stack.pop()
+        if current_node == end:
+            path = rebuildPath(parent, start, end)
+            distance = computeDistance(path, distances)
             return path, distance, len(visited)
-        if node not in visited:
-            visited.append(node)
-        remove_from_stack = True
-        for next_node in graph.get(node, []):
-            if next_node not in visited:
-                stack.append(next_node)
-                parent[next_node] = node
-                remove_from_stack = False
-                break
-        if remove_from_stack:
-            stack.pop()
-    # End your code (Part 2)
+        for neighbor in graph.get(current_node, []):
+            if neighbor not in visited:
+                visited.append(neighbor)
+                stack.append(neighbor)
+                parent[neighbor] = current_node
 
 
 if __name__ == '__main__':
