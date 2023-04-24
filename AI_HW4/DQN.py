@@ -79,7 +79,7 @@ class Net(nn.Module):
 
 
 class Agent():
-    def __init__(self, env, epsilon=0.95, learning_rate=0.0002, GAMMA=0.97, batch_size=32, capacity=10000):
+    def __init__(self, env, epsilon=0.05, learning_rate=0.0002, GAMMA=0.97, batch_size=32, capacity=10000):
         """
         The agent learning how to control the action of the cart pole.
         Hyperparameters:
@@ -131,8 +131,59 @@ class Agent():
             self.target_net.load_state_dict(self.evaluate_net.state_dict())
 
         # Begin your code
-        # TODO
-        raise NotImplementedError("Not implemented yet.")
+        b_state,b_action,b_reward,b_next_state,b_done=self.buffer.sample(self.batch_size)
+        #print (self.evaluate_net.forward(torch.FloatTensor(b_state[0])))
+        
+        val=np.zeros((len(b_action),1))
+        for i in range(len(b_action)):
+            val[i][0]=b_action[i]
+        action=torch.tensor(val,dtype=torch.long)
+        '''
+        val=np.zeros((len(b_action)))
+        for i in range(len(b_action)):
+            val[i]=self.evaluate_net.forward(torch.FloatTensor(b_state[i]))[b_action[i]]
+        q_eval=torch.tensor(val)
+        
+        tar=np.zeros((len(b_reward)))
+        for i in range(len(b_reward)):
+            if(b_done[i]==0):
+                tar[i]=b_reward[i]+ self.gamma * torch.max(self.target_net.forward(torch.FloatTensor(b_next_state[i])).detach())
+            else:
+                tar[i]=b_reward[i]
+        q_target=torch.tensor(tar)
+        '''
+        rew=np.zeros((len(b_reward),1))
+        for i in range(len(b_reward)):
+            rew[i][0]=b_reward[i]
+        reward=torch.FloatTensor(rew)
+        
+        #print (b_reward)
+        #print (torch.max(self.target_net.forward(torch.FloatTensor(b_next_state[0])).detach())) 
+        #print (torch.max(self.target_net.forward(torch.FloatTensor(b_next_state)).detach(),1)[0])
+        #print (self.evaluate_net.forward(torch.FloatTensor(b_state)))
+        q_eval = self.evaluate_net(torch.FloatTensor(b_state)).gather(1, action)
+        q_next = self.target_net(torch.FloatTensor(b_next_state)).detach()
+        q_target = reward + self.gamma * q_next.max(1).values.unsqueeze(-1) # target Q value
+
+        
+
+        
+        for i in range(len(b_done)):
+            if(b_done[i]==1):
+                q_target[i][0]=b_reward[i]
+
+
+
+        lossfun = nn.MSELoss()
+        loss = lossfun(q_eval, q_target)
+        
+        
+        # Backpropagation
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        
+        self.count+=1
         # End your code
         torch.save(self.target_net.state_dict(), "./Tables/DQN.pt")
 
@@ -151,7 +202,12 @@ class Agent():
         with torch.no_grad():
             # Begin your code
             # TODO
-            raise NotImplementedError("Not implemented yet.")
+            x = torch.unsqueeze(torch.tensor(state, dtype=torch.float), 0)
+            if np.random.uniform() < self.epsilon:
+                action = np.random.randint(0, self.n_actions)
+            else:
+                action_values = self.evaluate_net(x)
+                action = torch.argmax(action_values).item()
             # End your code
         return action
 
@@ -168,7 +224,9 @@ class Agent():
         """
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
+        x = torch.unsqueeze(torch.tensor(self.env.reset(), dtype=torch.float), 0)
+        action_values = self.evaluate_net(x)
+        return torch.max(action_values).item()
         # End your code
 
 
