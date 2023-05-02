@@ -7,7 +7,7 @@ total_reward = []
 
 
 class Agent():
-    def __init__(self, env, epsilon=0.95, learning_rate=0.8, gamma=0.9):
+    def __init__(self, env, epsilon=0.05, learning_rate=0.8, gamma=0.9):
         """
         Parameters:
             env: target enviornment.
@@ -42,7 +42,7 @@ class Agent():
         if (r > self.epsilon):
             return np.argmax(self.qtable[state])
         else:
-            return env.action_space.sample()
+            return self.env.action_space.sample()
         # End your code
 
     def learn(self, state, action, reward, next_state, done):
@@ -60,12 +60,8 @@ class Agent():
             None (Don't need to return anything)
         """
         # Begin your code
-        # self.qtable[state, action]=self.qtable[state, action] + self.learning_rate*(reward + 
-            # self.gamma *np.max(self.qtable[next_state])-self.qtable[state, action])
-        max_next = np.max(self.qtable[next_state])
-        new = (1-self.learning_rate)*self.qtable[state,action]+self.learning_rate*(reward+self.gamma*max_next)
-        
-        self.qtable[state,action] = new
+        # Q-learning algorithm
+        self.qtable[state,action] = (1 - self.learning_rate) * self.qtable[state, action] + self.learning_rate * (reward + self.gamma * np.max(self.qtable[next_state]))
         # End your code
         if done:
             np.save("./Tables/taxi_table.npy", self.qtable)
@@ -81,6 +77,7 @@ class Agent():
             max_q: the max Q value of given state
         """
         # Begin your code
+        # return max Q
         return np.max(self.qtable[state])
         # End your code
 
