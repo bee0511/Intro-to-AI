@@ -38,10 +38,9 @@ class Agent():
             action: The action to be evaluated.
         """
         # Begin your code
-        r = np.random.uniform(0, 1)
-        if (r > self.epsilon):
+        if (np.random.uniform(0, 1) > self.epsilon): # exploitation
             return np.argmax(self.qtable[state])
-        else:
+        else: # exploration
             return self.env.action_space.sample()
         # End your code
 
@@ -61,7 +60,7 @@ class Agent():
         """
         # Begin your code
         # Q-learning algorithm
-        self.qtable[state,action] = (1 - self.learning_rate) * self.qtable[state, action] + self.learning_rate * (reward + self.gamma * np.max(self.qtable[next_state]))
+        self.qtable[state, action] = (1 - self.learning_rate) * self.qtable[state, action] + self.learning_rate * (reward + self.gamma * np.max(self.qtable[next_state]))
         # End your code
         if done:
             np.save("./Tables/taxi_table.npy", self.qtable)

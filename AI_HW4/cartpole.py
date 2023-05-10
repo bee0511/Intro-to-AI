@@ -91,11 +91,7 @@ class Agent():
             3. You might find something useful in Agent.__init__()
         """
         # Begin your code
-        temp=[]
-        for i in range(len(observation)):
-            temp.append(self.discretize_value(observation[i],self.bins[i]))
-
-        return tuple(temp)
+        return tuple([self.discretize_value(obs, bin) for obs, bin in zip(observation, self.bins)])     
         # End your code
 
     def choose_action(self, state):
@@ -108,10 +104,9 @@ class Agent():
             action: The action to be evaluated.
         """
         # Begin your code
-        r = np.random.uniform(0, 1)
-        if (r > self.epsilon):
+        if (np.random.uniform(0, 1) > self.epsilon): # exploitation
             return np.argmax(self.qtable[state])
-        else:
+        else: # exploration
             return self.env.action_space.sample()
         # End your code
 
@@ -128,13 +123,18 @@ class Agent():
             None (Don't need to return anything)
         """
         # Begin your code
-        if not done :
-            self.qtable[state+ (action,)]=self.qtable[state+ (action,)] + self.learning_rate*(reward + 
-            self.gamma *np.max(self.qtable[next_state])-self.qtable[state+ (action,)])
-        else :
-            self.qtable[state+ (action,)]=self.qtable[state+ (action,)] + self.learning_rate*(reward -self.qtable[state+ (action,)])
-        # End your code
+        # Get the max Q value of the next state
+        max_next = np.max(self.qtable[next_state])
+        if done: max_next = 0
+        
+        # Get the Q value of the current state
+        original = self.qtable[state + (action,)]
+        
+        # Update Q value with Q-learning
+        self.qtable[state + (action,)] = (1 - self.learning_rate) * original + self.learning_rate * (reward + self.gamma * max_next)
+        
         if done:
+        # End your code
             np.save("./Tables/cartpole_table.npy", self.qtable)
 
     def check_max_Q(self):
@@ -149,6 +149,8 @@ class Agent():
             max_q: the max Q value of initial state(self.env.reset())
         """
         # Begin your code
+        
+        # return max Q value of initial state
         return np.max(self.qtable[self.discretize_observation(self.env.reset())])
         # End your code
 

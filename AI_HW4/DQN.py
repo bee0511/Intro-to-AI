@@ -131,61 +131,44 @@ class Agent():
             self.target_net.load_state_dict(self.evaluate_net.state_dict())
 
         # Begin your code
-        b_state,b_action,b_reward,b_next_state,b_done=self.buffer.sample(self.batch_size)
-        #print (self.evaluate_net.forward(torch.FloatTensor(b_state[0])))
+        # Add attribute step to record how many steps have done
+        if not hasattr(self, "step"): self.step = 0
         
-        val=np.zeros((len(b_action),1))
-        for i in range(len(b_action)):
-            val[i][0]=b_action[i]
-        action=torch.tensor(val,dtype=torch.long)
-        '''
-        val=np.zeros((len(b_action)))
-        for i in range(len(b_action)):
-            val[i]=self.evaluate_net.forward(torch.FloatTensor(b_state[i]))[b_action[i]]
-        q_eval=torch.tensor(val)
+        # 2. Sample trajectories of batch size from the replay buffer.
+        batch_state, batch_action, batch_reward, batch_next_state, batch_done = self.buffer.sample(self.batch_size)
         
-        tar=np.zeros((len(b_reward)))
-        for i in range(len(b_reward)):
-            if(b_done[i]==0):
-                tar[i]=b_reward[i]+ self.gamma * torch.max(self.target_net.forward(torch.FloatTensor(b_next_state[i])).detach())
-            else:
-                tar[i]=b_reward[i]
-        q_target=torch.tensor(tar)
-        '''
-        rew=np.zeros((len(b_reward),1))
-        for i in range(len(b_reward)):
-            rew[i][0]=b_reward[i]
-        reward=torch.FloatTensor(rew)
+        action=torch.tensor(np.asarray(batch_action).reshape(len(batch_action), 1), dtype=torch.long)
+        reward=torch.tensor(np.asarray(batch_reward).reshape(len(batch_reward), 1), dtype=torch.float)
         
-        #print (b_reward)
-        #print (torch.max(self.target_net.forward(torch.FloatTensor(b_next_state[0])).detach())) 
-        #print (torch.max(self.target_net.forward(torch.FloatTensor(b_next_state)).detach(),1)[0])
-        #print (self.evaluate_net.forward(torch.FloatTensor(b_state)))
-        q_eval = self.evaluate_net(torch.FloatTensor(b_state)).gather(1, action)
-        q_next = self.target_net(torch.FloatTensor(b_next_state)).detach()
+        # 3. Forward the data to the evaluate net and the target net.
+        q_evaluate = self.evaluate_net(torch.tensor(np.asarray(batch_state), dtype=torch.float)).gather(1, action)
+        q_next = self.target_net(torch.tensor(np.asarray(batch_next_state), dtype=torch.float)).detach()
         q_target = reward + self.gamma * q_next.max(1).values.unsqueeze(-1) # target Q value
-
+        for i in range(len(batch_done)):
+            if batch_done[i]:
+                q_target[i][0] = 0
+                
+        # 4. Compute the loss with MSE.
+        loss_function = nn.MSELoss()
+        loss = loss_function(q_evaluate, q_target)
         
-
+        # 5. Zero-out the gradients.
+        self.optimizer.zero_grad() 
         
-        for i in range(len(b_done)):
-            if(b_done[i]==1):
-                q_target[i][0]=b_reward[i]
-
-
-
-        lossfun = nn.MSELoss()
-        loss = lossfun(q_eval, q_target)
-        
-        
-        # Backpropagation
-        self.optimizer.zero_grad()
+        # 6. Backpropagation.
         loss.backward()
+        
+        # 7. Optimize the loss function.
         self.optimizer.step()
         
-        self.count+=1
+        # Update count and step
+        self.count += 1
+        self.step += 1
+        
+        # Save the result every 100 steps
+        if self.step % 100 == 0:
+            torch.save(self.target_net.state_dict(), "./Tables/DQN.pt")
         # End your code
-        torch.save(self.target_net.state_dict(), "./Tables/DQN.pt")
 
     def choose_action(self, state):
         """
@@ -202,12 +185,14 @@ class Agent():
         with torch.no_grad():
             # Begin your code
             # TODO
-            x = torch.unsqueeze(torch.tensor(state, dtype=torch.float), 0)
-            if np.random.uniform() < self.epsilon:
-                action = np.random.randint(0, self.n_actions)
-            else:
+            x = torch.tensor(state, dtype=torch.float)
+            if np.random.uniform(0, 1) > self.epsilon: # exploration
+                # Predict Q value from evaluate net
                 action_values = self.evaluate_net(x)
+                # Pick action that contains largest Q value
                 action = torch.argmax(action_values).item()
+            else: # exploitation
+                action = env.action_space.sample()
             # End your code
         return action
 
@@ -223,10 +208,15 @@ class Agent():
             max_q: the max Q value of initial state(self.env.reset())
         """
         # Begin your code
-        # TODO
-        x = torch.unsqueeze(torch.tensor(self.env.reset(), dtype=torch.float), 0)
-        action_values = self.evaluate_net(x)
-        return torch.max(action_values).item()
+        
+        # Get the Q value of initial state
+        initial_state = torch.tensor(self.env.reset(), dtype=torch.float)
+        q_value = self.target_net(initial_state).detach()
+        
+        # Get max Q value
+        max_q = q_value.max(0).values.unsqueeze(-1)
+        max_q = float(max_q[0])
+        return max_q
         # End your code
 
 
