@@ -207,18 +207,29 @@ class ParticleFilter(object):
     ##################################################################################
     def observe(self, agentX: int, agentY: int, observedDist: float) -> None:
         # BEGIN_YOUR_CODE
-        temp_particles = collections.defaultdict(float) # create new dictionary to store current particles calculated with
-        for r, c in self.particles:
-            temp = pow((util.colToX(c)-agentX),2)+pow((util.rowToY(r)-agentY),2)
-            mycar_distance = math.sqrt(temp) #dist of the grid to my car
-            pdf_calculated = util.pdf(mycar_distance,Const.SONAR_STD,observedDist) # mean: mycar_distance, sonar_std: std, value: observedDist 
-            temp_particles[(r, c)] = self.particles[(r, c)] * pdf_calculated # updete new dictionary with current particle*pdf
-        newParticles = collections.defaultdict(int) # create new dictionary for new particles
+        # Iterate all particles
+        for row, column in self.particles:
+            # Get the distance between the grid and my car
+            distance_to_car = math.sqrt(pow((util.colToX(column) - agentX), 2) + pow((util.rowToY(row) - agentY), 2))
+            
+            # Calculate the PDF with mean = distance to my car, std = Const.SONAR_STD, value = observedDist
+            pdf = util.pdf(distance_to_car, Const.SONAR_STD, observedDist) 
+            
+            # update new dictionary with current particle * pdf
+            self.particles[(row, column)] *= pdf
+            
+        # create new dictionary for new particles
+        new_particles = collections.defaultdict(int) 
 
-        for i in range(self.NUM_PARTICLES):
-            particle = util.weightedRandomChoice(temp_particles) #new NUM_PARTICLES sampled from the new re-weighted distribution
-            newParticles[particle] += 1 # dict : add 1 of val which index = particle
-        self.particles = newParticles # update new particles
+        for _ in range(self.NUM_PARTICLES):
+            # new NUM_PARTICLES sampled from the new re-weighted distribution
+            particle = util.weightedRandomChoice(self.particles) 
+            
+            # Update number of the particle in the grid
+            new_particles[particle] += 1 
+            
+        # update new particles
+        self.particles = new_particles 
         # END_YOUR_CODE
 
         self.updateBelief()
@@ -248,14 +259,20 @@ class ParticleFilter(object):
     ##################################################################################
     def elapseTime(self) -> None:
         # BEGIN_YOUR_CODE
-        newParticles = collections.defaultdict(int) # create new dictionary for new particles
-        for particle in self.particles:# loop over particles
-            val = self.particles[particle] # corresponding particles at the location
-            for i in range(val):  #call weightedRandomChoice for every particles at the location
-                new_t = self.transProbDict[particle] #self.transProbDict[oldTile][newTile], particle = oldtile; new_t = newtile(new weight dict)
-                temp_particle = util.weightedRandomChoice(new_t)# weightedRandomChoice based on new weight dict 
-                newParticles[temp_particle] += 1  # dict : add 1 of val which index = temp_particle
-        self.particles = newParticles #update particles
+        # create new dictionary for new particles
+        new_particles = collections.defaultdict(int)
+        
+        # Iterate all the particles
+        for particle in self.particles:
+            # Iterate all the particles in the grid
+            for _ in range(self.particles[particle]):
+                # Sample the particle based on its transition probability
+                temp_particle = util.weightedRandomChoice(self.transProbDict[particle]) # weightedRandomChoice based on new weight dict 
+                
+                # Update number of the particle in the grid
+                new_particles[temp_particle] += 1 
+                
+        self.particles = new_particles # Update particles
         # END_YOUR_CODE
 
     # Function: Get Belief
