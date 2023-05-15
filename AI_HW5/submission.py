@@ -52,14 +52,19 @@ class ExactInference(object):
 
     def observe(self, agentX: int, agentY: int, observedDist: float) -> None:
         # BEGIN_YOUR_CODE 
-        for r in range (self.belief.numRows):
-            for c in range (self.belief.numCols):#for each place in grid
-                temp = pow((util.colToX(c)-agentX),2)+pow((util.rowToY(r)-agentY),2)
-                mycar_distance = math.sqrt(temp) #dist of the grid to my car
-                pdf_calculated = util.pdf(mycar_distance,Const.SONAR_STD,observedDist) # mean : mycar_distance, sonar_std : std,
-                cur_prob = self.belief.getProb(r,c)                                    # value : observedDist    
-                self.belief.setProb(r,c,cur_prob* pdf_calculated) #update probability
-        self.belief.normalize()#normalize self.belief
+        # Iterate all locations of the map
+        for row in range (self.belief.numRows):
+            for column in range (self.belief.numCols):
+                # Get the distance between the grid and my car
+                distance_to_car = math.sqrt(pow((util.colToX(column) - agentX), 2) + pow((util.rowToY(row) - agentY), 2))
+                
+                # Calculate the PDF with mean = distance to my car, std = Const.SONAR_STD, value = observedDist
+                pdf = util.pdf(distance_to_car, Const.SONAR_STD, observedDist) 
+                
+                # Update the probability
+                self.belief.setProb(row, column, self.belief.getProb(row, column) * pdf)
+        # Normalize self.belief
+        self.belief.normalize()
         # END_YOUR_CODE
 
     ##################################################################################
@@ -86,15 +91,21 @@ class ExactInference(object):
         if self.skipElapse: ### ONLY FOR THE GRADER TO USE IN Part 1
             return
         # BEGIN_YOUR_CODE 
-        newBelief = util.Belief(self.belief.numRows, self.belief.numCols, value=0) # new belief for update with default all 0
-        for old,new in self.transProb: 
-            old_r,old_c = old # old col & row
-            new_r,new_c = new # new col & row
-            cur_prob = self.belief.getProb(old_r,old_c) # get current probability of current(old) row & col
-            trans_prob = self.transProb[(old, new)] # get transprob with (old,new) pair 
-            newBelief.addProb(new_r, new_c,  cur_prob * trans_prob) # update probability with new location and delta(cur_prob*trans_prob)
-        newBelief.normalize()
-        self.belief = newBelief # update normalized belief
+        
+        # Initialize new belief with value is 0
+        new_belief = util.Belief(self.belief.numRows, self.belief.numCols, value=0)
+        
+        for (oldTile, newTile), transProb in self.transProb.items():
+            # Get the location of old tile and new tile
+            old_r, old_c = oldTile 
+            new_r, new_c = newTile
+            
+            # Update the probability with new location and current probability and transition probability
+            new_belief.addProb(new_r, new_c,  self.belief.getProb(old_r,old_c) * transProb) # update probability with new location and delta(cur_prob*trans_prob)
+        
+        # Update self belief and normalize
+        self.belief = new_belief 
+        self.belief.normalize()
         # END_YOUR_CODE
 
     # Function: Get Belief
