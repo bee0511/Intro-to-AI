@@ -52,7 +52,7 @@ class ExactInference(object):
 
     def observe(self, agentX: int, agentY: int, observedDist: float) -> None:
         # BEGIN_YOUR_CODE 
-        # Iterate all locations of the map
+        # Iterate all locations
         for row in range (self.belief.numRows):
             for column in range (self.belief.numCols):
                 # Get the distance between the grid and my car
@@ -101,7 +101,7 @@ class ExactInference(object):
             new_r, new_c = newTile
             
             # Update the probability with new location and current probability and transition probability
-            new_belief.addProb(new_r, new_c,  self.belief.getProb(old_r,old_c) * transProb) # update probability with new location and delta(cur_prob*trans_prob)
+            new_belief.addProb(new_r, new_c, self.belief.getProb(old_r, old_c) * transProb)
         
         # Update self belief and normalize
         self.belief = new_belief 
@@ -222,11 +222,11 @@ class ParticleFilter(object):
         new_particles = collections.defaultdict(int) 
 
         for _ in range(self.NUM_PARTICLES):
-            # new NUM_PARTICLES sampled from the new re-weighted distribution
-            particle = util.weightedRandomChoice(self.particles) 
+            # Sample a particle from the new re-weighted distribution using weighted random choice.
+            temp_particle = util.weightedRandomChoice(self.particles) 
             
             # Update number of the particle in the grid
-            new_particles[particle] += 1 
+            new_particles[temp_particle] += 1 
             
         # update new particles
         self.particles = new_particles 
@@ -266,8 +266,8 @@ class ParticleFilter(object):
         for particle in self.particles:
             # Iterate all the particles in the grid
             for _ in range(self.particles[particle]):
-                # Sample the particle based on its transition probability
-                temp_particle = util.weightedRandomChoice(self.transProbDict[particle]) # weightedRandomChoice based on new weight dict 
+                # Sample the particle based on its transition probability using weighted random choice.
+                temp_particle = util.weightedRandomChoice(self.transProbDict[particle])
                 
                 # Update number of the particle in the grid
                 new_particles[temp_particle] += 1 

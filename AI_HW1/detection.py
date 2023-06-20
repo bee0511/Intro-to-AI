@@ -3,16 +3,6 @@ import cv2
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-def image_resize(image):
-  height, width = image.shape[0], image.shape[1]
-  width_new = 800
-  height_new = 600
-  if width / height >= width_new / height_new:
-    image_new = cv2.resize(image, (width_new, int(height * width_new / width)))
-  else:
-    image_new = cv2.resize(image, (int(width * height_new / height), height_new))
-  return image_new
-
 def detect(dataPath, clf):
     """
     Please read detectData.txt to understand the format. Load the image and get
@@ -26,6 +16,16 @@ def detect(dataPath, clf):
         No returns.
     """
     # Begin your code (Part 4)
+    """ 
+    Line 29 ~ Line 38: read the file and use regions to store each image's selected region
+    Line 39: use plt.subplots to show image, where row is 1 and columns are len(regions)
+    Line 40: use enumerate(regions.items()) to iterate all the selected regions.
+    Line 41 ~ Line 46: read images and initialize axes.
+    Line 47 ~ Line 52: iterate all the regions in the selected image, 
+    use classify to check whether the region is face or not, and use add_patch to put green or red
+    rectangles on the regions.
+    Line 53: show the result.
+    """
     regions = {}
     current_filename = ""
     with open(dataPath) as f:
@@ -36,17 +36,21 @@ def detect(dataPath, clf):
           regions[current_filename] = []
         elif len(s) == 4:
           regions[current_filename].append([int(string) for string in s])
-    for (filename, regions) in regions.items():
-      image = cv2.imread(f"data/detect/{filename}")
-      gray_image = cv2.imread(f"data/detect/{filename}", cv2.IMREAD_GRAYSCALE)
+    fig, ax = plt.subplots(1, len(regions))
+    for index, (filename, regions) in enumerate(regions.items()):
+      image = cv2.imread(f"data/detect/{filename}", flags=cv2.IMREAD_UNCHANGED)
+      image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+      gray_image = cv2.imread(f"data/detect/{filename}", flags=cv2.IMREAD_GRAYSCALE)
+      ax[index].axis('off')
+      ax[index].set_title(filename)
+      ax[index].imshow(image)
       for region in regions:
         x, y, w, h = region
         crop_image = gray_image[y:y+h, x:x+w]
-        crop_image = cv2.resize(crop_image, (19, 19), interpolation=cv2.INTER_NEAREST)
+        crop_image = cv2.resize(crop_image, (19, 19), interpolation=cv2.INTER_CUBIC)
         is_face = clf.classify(crop_image)
-        image = cv2.rectangle(image, (x, y), (x+w, y+h), color=(0, 255, 0) if is_face else (0, 0, 255), thickness=3)
-      image = image_resize(image)
-      cv2.imshow(filename, image)
-      cv2.waitKey(0)
+        ax[index].add_patch(Rectangle((x, y), w, h, linewidth = 1, edgecolor='g' if is_face else 'r', fill = False))
+    plt.show()
     #raise NotImplementedError("To be implemented")
     # End your code (Part 4)
+

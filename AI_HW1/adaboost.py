@@ -57,6 +57,7 @@ class Adaboost:
             weights = weights / np.sum(weights)
             # Compute error and select best classifiers
             clf, error = self.selectBest(featureVals, iis, labels, features, weights)
+            # clf, error = self.selectBest_method2(featureVals, iis, labels, features, weights)
             #update weights
             accuracy = []
             for x, y in zip(iis, labels):
@@ -148,14 +149,51 @@ class Adaboost:
             bestError: The error of the best classifer
         """
         # Begin your code (Part 2)
-        #raise NotImplementedError("To be implemented")
-        Errors = np.sum(np.multiply(weights, np.abs(np.where(featureVals < 0, 1, 0) - labels)), 1)
+        """
+          Line 158: calculate h
+          Line 159: use the formula in the slides to compute error
+          Line 160: find the bestError_index from array Errors
+          Line 161 ~ 162: use bestError_index to assign bestError and bestClf           
+        """
+        h = np.where(featureVals < 0, 1, 0)
+        Errors = np.sum(np.multiply(weights, np.abs(h - np.tile(labels, (len(featureVals), 1)))), 1)
         bestError_index = np.argmin(Errors)
         bestError = Errors[bestError_index]
         bestClf = WeakClassifier(features[bestError_index])
         # End your code (Part 2)
         return bestClf, bestError
-    
+      
+    def selectBest_method2(self, featureVals, iis, labels, features, weights):
+        """
+        Finds the appropriate weak classifier for each feature.
+        Selects the best weak classifier for the given weights.
+          Parameters:
+            featureVals: A numpy array of shape (len(features), len(dataset)).
+              Each row represents the values of a single feature for each training sample.
+            iis: A list of numpy array with shape (m, n) representing the integral images.
+            labels: A list of integer.
+              The ith element is the classification of the ith training sample.
+            features: A numpy array of HaarFeature class.
+            weights: A numpy array with shape(len(dataset)).
+              The ith element is the weight assigned to the ith training sample.
+          Returns:
+            bestClf: The best WeakClassifier Class
+            bestError: The error of the best classifer
+        """
+        # Begin your code (Part 6)
+        """
+          Line 189: use sigmoid function to calculate h
+          Line 190 ~ Line 193: The same as Part 2
+        """
+        #raise NotImplementedError("To be implemented")
+        h = 1 / (1 + np.exp(featureVals))
+        Errors = np.sum(np.multiply(weights, np.abs(h - np.tile(labels, (len(featureVals), 1)))), 1)
+        bestError_index = np.argmin(Errors)
+        bestError = Errors[bestError_index]
+        bestClf = WeakClassifier(features[bestError_index])
+        # End your code (Part 6)
+        return bestClf, bestError
+      
     def classify(self, image):
         """
         Classifies an image
